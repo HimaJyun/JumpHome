@@ -1,0 +1,40 @@
+# Check new version.
+versionCheck: true
+
+database:
+  type: sqlite
+  sqlite:
+    file: "jumphome.db"
+  mysql:
+    host: "localhost:3306"
+    name: "jumphome"
+    username: "root"
+    password: "your_mysql_password"
+    #init: "SET SESSION query_cache_type=0" # recommended for MariaDB and less than MySQL 8.
+    init: "SELECT 1"
+    properties:
+      "useSSL": "false"
+      # encoding
+      #"useUnicode": "true"
+      #"characterEncoding": "UTF-8"
+      #"characterSetResults": "UTF-8"
+      # performance
+      "maintainTimeStats": "false"
+      "elideSetAutoCommits": "true"
+      "useLocalSessionState": "true"
+      "alwaysSendSetIsolation": "false"
+      "cacheServerConfiguration": "true"
+      "cachePrepStmts": "true"
+      "prepStmtCacheSize": "250"
+      "prepStmtCacheSqlLimit": "2048"
+      #"useServerPrepStmts": "true"
+    connectionPool:
+      # -1 is default
+      maximumPoolSize: -1
+      minimumIdle: -1
+      maxLifetime: -1
+      connectionTimeout: -1
+      idleTimeout: -1
+
+# Don't touch
+version: 1
