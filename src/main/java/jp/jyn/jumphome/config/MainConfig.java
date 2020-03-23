@@ -6,16 +6,23 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.Properties;
 
 public class MainConfig {
     public final boolean versionCheck;
+
+    public final boolean spawnCurrent;
+    public final String spawnMoveTo;
 
     public final DatabaseConfig database;
 
     @PackagePrivate
     MainConfig(FileConfiguration config) {
         versionCheck = config.getBoolean("versionCheck");
+
+        spawnCurrent = config.getBoolean("spawn.current");
+        spawnMoveTo = Objects.requireNonNull(config.getString("spawn.moveTo"), "config.yml(spawn.moveTo)");
 
         database = new DatabaseConfig(config.getConfigurationSection("database"));
     }

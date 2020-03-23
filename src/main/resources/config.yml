@@ -1,6 +1,12 @@
 # Check new version.
 versionCheck: true
 
+# Default(No argument) spawn location.
+# current: true->Move to current world spawn, false->Move to 'moveTo' world spawn.
+spawn:
+  current: true
+  moveTo: "world"
+
 database:
   type: sqlite
   sqlite:

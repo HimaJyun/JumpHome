@@ -1,12 +1,15 @@
 package jp.jyn.jumphome;
 
+import jp.jyn.jumphome.command.Spawn;
 import jp.jyn.jumphome.config.ConfigLoader;
 import jp.jyn.jumphome.config.MainConfig;
 import jp.jyn.jumphome.db.Database;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Objects;
 
 public class JumpHome extends JavaPlugin {
     private static JumpHome instance = null;
@@ -26,6 +29,14 @@ public class JumpHome extends JavaPlugin {
         // Database
         Database database = Database.connect(mainConfig.database);
         destructor.add(database::close);
+
+        // Command: spawn
+        PluginCommand commandSpawn = Objects.requireNonNull(getCommand("spawn"));
+        Spawn spawn = new Spawn(mainConfig);
+        commandSpawn.setExecutor(spawn);
+        destructor.add(() -> commandSpawn.setExecutor(this));
+        commandSpawn.setTabCompleter(spawn);
+        destructor.add(() -> commandSpawn.setTabCompleter(this));
     }
 
     @Override

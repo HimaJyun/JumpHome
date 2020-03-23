@@ -41,6 +41,10 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>himajyun-repo</id>
+            <url>https://himajyun.github.io/mvn-repo/</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
