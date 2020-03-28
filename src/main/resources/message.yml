@@ -1,0 +1,33 @@
+doNotHavePermission: "&cYou don't have permission!!"
+
+worldDoesNotExist: "{world} doesn't exist."
+
+# //*<!-- syntax -->*/
+# &0->Black(#000000)
+# &1->Dark Blue(#0000AA)
+# &2->Dark Green(#00AA00)
+# &3->Dark Aqua(#00AAAA)
+# &4->Dark Red(#AA0000)
+# &5->Purple(#AA00AA)
+# &6->Gold(#FFAA00)
+# &7->Gray(#AAAAAA)
+# &8->Dark Gray(#555555)
+# &9->Blue(#5555FF)
+# &a->Green(#55FF55)
+# &b->Aqua(#55FFFF)
+# &c->Red(#FF5555)
+# &d->Light Purple(#FF55FF)
+# &e->Yellow(#FFFF55)
+# &f->White(#FFFFFF)
+# &k->Obfuscated
+# &l->Bold
+# &m->Strikethrough
+# &n->Underline
+# &o->Italic
+# &r->Reset
+# &&->&
+# {variable}->variable
+# &{variable&}->{variable}
+
+# Don't touch
+version: 1

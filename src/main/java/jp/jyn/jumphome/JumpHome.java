@@ -3,6 +3,7 @@ package jp.jyn.jumphome;
 import jp.jyn.jumphome.command.Spawn;
 import jp.jyn.jumphome.config.ConfigLoader;
 import jp.jyn.jumphome.config.MainConfig;
+import jp.jyn.jumphome.config.MessageConfig;
 import jp.jyn.jumphome.db.Database;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,6 +26,7 @@ public class JumpHome extends JavaPlugin {
         ConfigLoader config = new ConfigLoader();
         config.reloadConfig();
         MainConfig mainConfig = config.getMainConfig();
+        MessageConfig messageConfig = config.getMessageConfig();
 
         // Database
         Database database = Database.connect(mainConfig.database);
@@ -32,7 +34,7 @@ public class JumpHome extends JavaPlugin {
 
         // Command: spawn
         PluginCommand commandSpawn = Objects.requireNonNull(getCommand("spawn"));
-        Spawn spawn = new Spawn(mainConfig);
+        Spawn spawn = new Spawn(mainConfig, messageConfig);
         commandSpawn.setExecutor(spawn);
         destructor.add(() -> commandSpawn.setExecutor(this));
         commandSpawn.setTabCompleter(spawn);
