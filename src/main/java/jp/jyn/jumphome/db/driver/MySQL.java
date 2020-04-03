@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import jp.jyn.jumphome.db.Database;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -49,21 +48,18 @@ public class MySQL extends Database {
     @SuppressWarnings("DuplicatedCode")
     @Override
     public boolean set(int user, String name, int world, double x, double y, double z, float yaw) {
-        try (Connection c = hikari.getConnection();
-             PreparedStatement s = c.prepareStatement(
-                 "INSERT INTO `home` VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE" +
-                     "  `world`=VALUES(`world`), `x`=VALUES(`x`), `y`=VALUES(`y`), `z`=VALUES(`z`), `yaw`=VALUES(`yaw`)"
-             )) {
-            s.setInt(1, user);
-            s.setString(2, name);
-            s.setInt(3, world);
-            s.setDouble(4, x);
-            s.setDouble(5, y);
-            s.setDouble(6, z);
-            s.setFloat(7, yaw);
-            return s.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return 0 != executeUpdate(
+            "INSERT INTO `home` VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE" +
+                "  `world`=VALUES(`world`), `x`=VALUES(`x`), `y`=VALUES(`y`), `z`=VALUES(`z`), `yaw`=VALUES(`yaw`)",
+            s -> {
+                s.setInt(1, user);
+                s.setString(2, name);
+                s.setInt(3, world);
+                s.setDouble(4, x);
+                s.setDouble(5, y);
+                s.setDouble(6, z);
+                s.setFloat(7, yaw);
+            }
+        );
     }
 }

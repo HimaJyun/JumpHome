@@ -2,6 +2,7 @@ package jp.jyn.jumphome.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import jp.jyn.jbukkitlib.sql.SQLTemplate;
 import jp.jyn.jbukkitlib.uuid.UUIDBytes;
 import jp.jyn.jumphome.JumpHome;
 import jp.jyn.jumphome.config.MainConfig;
@@ -18,10 +19,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public abstract class Database {
+public abstract class Database extends SQLTemplate {
     protected final HikariDataSource hikari;
 
     protected Database(HikariDataSource hikari) {
+        super(hikari::getConnection);
         this.hikari = hikari;
 
         // checking database version
@@ -135,21 +137,23 @@ public abstract class Database {
                     s2.executeUpdate();
                     try (ResultSet r = s2.getGeneratedKeys()) {
                         if (r.next()) {
-                            c.commit();
                             return r.getInt(1);
                         }
                     }
                 }
+
+                // IDが出てない
+                c.rollback();
+                throw new RuntimeException("Unable to issue ID.");
             } catch (SQLException e) {
                 c.rollback();
                 throw e;
             } finally {
-                c.setAutoCommit(true);
+                c.setAutoCommit(true); // eq commit()
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        throw new RuntimeException("Unable to issue ID.");
     }
     // endregion
 
@@ -175,16 +179,13 @@ public abstract class Database {
     }
 
     public boolean delete(int user, String name) {
-        try (Connection c = hikari.getConnection();
-             PreparedStatement s = c.prepareStatement(
-                 "DELETE FROM `home` WHERE `user`=? AND `name`=?"
-             )) {
-            s.setInt(1, user);
-            s.setString(2, name);
-            return s.executeUpdate() != 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return 0 != delete(
+            "DELETE FROM `home` WHERE `user`=? AND `name`=?",
+            s -> {
+                s.setInt(1, user);
+                s.setString(2, name);
+            }
+        );
     }
 
     public List<RawLocation> list(int user) {
@@ -207,28 +208,6 @@ public abstract class Database {
                 return result;
             }
         );
-    }
-
-    protected <T> T select(String select, PreparedParameter parameter, ResultMapper<T> mapper) {
-        try (Connection c = hikari.getConnection();
-             PreparedStatement s = c.prepareStatement(select)) {
-            parameter.set(s);
-            try (ResultSet r = s.executeQuery()) {
-                return mapper.map(r);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @FunctionalInterface
-    protected interface PreparedParameter {
-        void set(PreparedStatement statement) throws SQLException;
-    }
-
-    @FunctionalInterface
-    protected interface ResultMapper<T> {
-        T map(ResultSet result) throws SQLException;
     }
 
     public static class RawLocation {
