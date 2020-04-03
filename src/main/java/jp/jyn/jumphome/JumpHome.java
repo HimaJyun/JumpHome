@@ -14,6 +14,7 @@ import java.util.Objects;
 
 public class JumpHome extends JavaPlugin {
     private static JumpHome instance = null;
+    private Home home;
 
     // LIFO
     private final Deque<Runnable> destructor = new ArrayDeque<>();
@@ -31,6 +32,10 @@ public class JumpHome extends JavaPlugin {
         // Database
         Database database = Database.connect(mainConfig.database);
         destructor.add(database::close);
+
+        // Home
+        home = new Home(database);
+        destructor.add(() -> home = null);
 
         // Command: spawn
         PluginCommand commandSpawn = Objects.requireNonNull(getCommand("spawn"));
@@ -55,5 +60,14 @@ public class JumpHome extends JavaPlugin {
      */
     public static JumpHome getInstance() {
         return instance;
+    }
+
+    /**
+     * Get Home instance
+     *
+     * @return Home instance
+     */
+    public Home getHome() {
+        return home;
     }
 }

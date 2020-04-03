@@ -2,15 +2,20 @@ package jp.jyn.jumphome.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import jp.jyn.jbukkitlib.uuid.UUIDBytes;
 import jp.jyn.jumphome.JumpHome;
 import jp.jyn.jumphome.config.MainConfig;
 import jp.jyn.jumphome.db.driver.MySQL;
 import jp.jyn.jumphome.db.driver.SQLite;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public abstract class Database {
@@ -82,6 +87,165 @@ public abstract class Database {
     public void close() {
         if (hikari != null) {
             hikari.close();
+        }
+    }
+
+    // region id
+    public int user2id(UUID uuid) {
+        byte[] bytesUUID = UUIDBytes.toBytes(uuid);
+        return getId(
+            "SELECT `id` FROM `id_user` WHERE `uuid`=?",
+            "INSERT INTO `id_user` (`uuid`) VALUES (?)",
+            p -> p.setBytes(1, bytesUUID)
+        );
+    }
+
+    public int world2Id(String world) {
+        return getId(
+            "SELECT `id` FROM `id_world` WHERE `world`=?",
+            "INSERT INTO `id_world` (`world`) VALUES (?)",
+            p -> p.setString(1, world)
+        );
+    }
+
+    public String id2world(int id) {
+        return select(
+            "SELECT `world` FROM `id_world` WHERE `id`=?",
+            p -> p.setInt(1, id),
+            r -> r.next() ? r.getString(1) : null
+        );
+    }
+
+    protected int getId(String select, String insert, PreparedParameter parameter) {
+        try (Connection c = hikari.getConnection()) {
+            c.setAutoCommit(false);
+            try (PreparedStatement s = c.prepareStatement(select)) {
+                parameter.set(s);
+                try (ResultSet r = s.executeQuery()) {
+                    if (r.next()) {
+                        return r.getInt(1);
+                    }
+                }
+
+                // ID発行
+                try (PreparedStatement s2 = c.prepareStatement(insert,
+                    PreparedStatement.RETURN_GENERATED_KEYS // TODO: これたぶんSQLiteで使えん
+                )) {
+                    parameter.set(s2);
+                    s2.executeUpdate();
+                    try (ResultSet r = s2.getGeneratedKeys()) {
+                        if (r.next()) {
+                            c.commit();
+                            return r.getInt(1);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            } finally {
+                c.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        throw new RuntimeException("Unable to issue ID.");
+    }
+    // endregion
+
+    public abstract boolean set(int user, String name, int world, double x, double y, double z, float yaw);
+
+    public RawLocation get(int user, String name) {
+        return select(
+            "SELECT `world`,`x`,`y`,`z`,`yaw` FROM `home` WHERE `user`=? AND `name`=?",
+            p -> {
+                p.setInt(1, user);
+                p.setString(2, name);
+            },
+            r -> r.next()
+                ? new RawLocation(
+                name,
+                r.getInt("world"),
+                r.getDouble("x"),
+                r.getDouble("y"),
+                r.getDouble("z"),
+                r.getFloat("yaw"))
+                : null
+        );
+    }
+
+    public boolean delete(int user, String name) {
+        try (Connection c = hikari.getConnection();
+             PreparedStatement s = c.prepareStatement(
+                 "DELETE FROM `home` WHERE `user`=? AND `name`=?"
+             )) {
+            s.setInt(1, user);
+            s.setString(2, name);
+            return s.executeUpdate() != 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<RawLocation> list(int user) {
+        return select(
+            "SELECT `name`,`world`,`x`,`y`,`z`,`yaw` FROM `home` WHERE `user`=?",
+            p -> p.setInt(1, user),
+            r -> {
+                // 大抵の場合は初期容量(10)で収まると予想されるので、参照の局所性で有利なArrayListを使う。(LinkedListに性能的なメリットが少ない)
+                List<RawLocation> result = new ArrayList<>();
+                while (r.next()) {
+                    result.add(new RawLocation(
+                        r.getString("name"),
+                        r.getInt("world"),
+                        r.getDouble("x"),
+                        r.getDouble("y"),
+                        r.getDouble("z"),
+                        r.getFloat("yaw")
+                    ));
+                }
+                return result;
+            }
+        );
+    }
+
+    protected <T> T select(String select, PreparedParameter parameter, ResultMapper<T> mapper) {
+        try (Connection c = hikari.getConnection();
+             PreparedStatement s = c.prepareStatement(select)) {
+            parameter.set(s);
+            try (ResultSet r = s.executeQuery()) {
+                return mapper.map(r);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @FunctionalInterface
+    protected interface PreparedParameter {
+        void set(PreparedStatement statement) throws SQLException;
+    }
+
+    @FunctionalInterface
+    protected interface ResultMapper<T> {
+        T map(ResultSet result) throws SQLException;
+    }
+
+    public static class RawLocation {
+        public final String name;
+        public final int world;
+        public final double x;
+        public final double y;
+        public final double z;
+        public final float yaw;
+
+        public RawLocation(String name, int world, double x, double y, double z, float yaw) {
+            this.name = name;
+            this.world = world;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.yaw = yaw;
         }
     }
 }
