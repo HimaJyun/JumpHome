@@ -18,6 +18,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Home {
+    public final static String DEFAULT_NAME = "default";
+
     private final Map<UUID, Map<String, HomePoint>> cache = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> user2idCache = new ConcurrentHashMap<>();
     private final Map<String, Integer> world2idCache = new ConcurrentHashMap<>();

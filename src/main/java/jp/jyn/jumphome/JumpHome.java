@@ -1,5 +1,6 @@
 package jp.jyn.jumphome;
 
+import jp.jyn.jumphome.command.SetHome;
 import jp.jyn.jumphome.command.Spawn;
 import jp.jyn.jumphome.config.ConfigLoader;
 import jp.jyn.jumphome.config.MainConfig;
@@ -9,8 +10,15 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class JumpHome extends JavaPlugin {
     private static JumpHome instance = null;
@@ -36,6 +44,15 @@ public class JumpHome extends JavaPlugin {
         // Home
         home = new Home(database);
         destructor.add(() -> home = null);
+        // package privateを迂回する用
+        Consumer<UUID> loadCache = home::loadCache;
+        Consumer<UUID> unloadCache = home::unloadCache;
+        Function<UUID, Set<String>> cachedName = home::cachedName;
+
+        // 共有ワーカー
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> Thread.currentThread().setName("jumphome-worker"));
+        destructor.add(executor::shutdown);
 
         // Command: spawn
         PluginCommand commandSpawn = Objects.requireNonNull(getCommand("spawn"));
@@ -44,6 +61,15 @@ public class JumpHome extends JavaPlugin {
         destructor.add(() -> commandSpawn.setExecutor(this));
         commandSpawn.setTabCompleter(spawn);
         destructor.add(() -> commandSpawn.setTabCompleter(this));
+
+        // Command: home
+        PluginCommand commandSetHome = Objects.requireNonNull(getCommand("sethome"));
+        // TODO: ブラックリスト
+        SetHome setHome = new SetHome(mainConfig, messageConfig, home, Collections.emptyList(), cachedName);
+        commandSetHome.setExecutor(setHome);
+        destructor.add(() -> commandSetHome.setExecutor(this));
+        commandSetHome.setTabCompleter(setHome);
+        destructor.add(() -> commandSetHome.setTabCompleter(this));
     }
 
     @Override

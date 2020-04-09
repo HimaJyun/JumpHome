@@ -1,11 +1,28 @@
 # Check new version.
 versionCheck: true
 
+bedOverride: true
+
 # Default(No argument) spawn location.
 # current: true->Move to current world spawn, false->Move to 'moveTo' world spawn.
 spawn:
   current: true
   moveTo: "world"
+
+limit:
+  economy:
+    enable: false
+    cost: "10000*(10^{count})"
+  # -1 is unlimited
+  default:
+    free: 1
+    paid: -1
+  group:
+    "jumphome.group.example":
+      free: 2
+      paid: 5
+    "jumphome.group.admin":
+      free: -1
 
 database:
   type: sqlite

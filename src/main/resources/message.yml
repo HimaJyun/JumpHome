@@ -1,6 +1,10 @@
 doNotHavePermission: "&cYou don't have permission!!"
-
 worldDoesNotExist: "{world} doesn't exist."
+unknownError: "Unknown error!!"
+
+set: "The home point has been set. (name={name}, world={world}, x={x}, y={y}, z={z})"
+overLimit: "No more can be set!"
+unavailableName: "{name} can't be used as a home name!"
 
 # //*<!-- syntax -->*/
 # &0->Black(#000000)

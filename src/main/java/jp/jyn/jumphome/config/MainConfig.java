@@ -1,12 +1,17 @@
 package jp.jyn.jumphome.config;
 
+import jp.jyn.jbukkitlib.config.parser.ExpressionParser;
 import jp.jyn.jbukkitlib.util.PackagePrivate;
 import jp.jyn.jumphome.JumpHome;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Properties;
 
 public class MainConfig {
@@ -14,6 +19,12 @@ public class MainConfig {
 
     public final boolean spawnCurrent;
     public final String spawnMoveTo;
+
+    public final boolean limitEconomyEnable;
+    public final ExpressionParser limitEconomyCost;
+    public final int limitDefaultFree;
+    public final int limitDefaultPaid;
+    public final List<Limit> limitGroup;
 
     public final DatabaseConfig database;
 
@@ -24,7 +35,42 @@ public class MainConfig {
         spawnCurrent = config.getBoolean("spawn.current");
         spawnMoveTo = Objects.requireNonNull(config.getString("spawn.moveTo"), "config.yml(spawn.moveTo)");
 
-        database = new DatabaseConfig(config.getConfigurationSection("database"));
+        limitEconomyEnable = config.getBoolean("limit.economy.enable");
+        limitEconomyCost = ExpressionParser.parse(Objects.requireNonNull(
+            config.getString("limit.economy.cost"),
+            "config.yml(limit.economy.cost)")
+        );
+        limitDefaultFree = config.getInt("limit.default.free", 1);
+        limitDefaultPaid = config.getInt("limit.default.paid", -1);
+        {
+            List<Limit> tmp = new ArrayList<>();
+            if (config.contains("limit.group", true)) {
+                ConfigurationSection s = Objects.requireNonNull(config.getConfigurationSection("limit.group"));
+                for (String key : s.getKeys(false)) {
+                    tmp.add(new Limit(key, s.getConfigurationSection(key)));
+                }
+            }
+            limitGroup = Collections.unmodifiableList(tmp);
+        }
+
+        database = new DatabaseConfig(Objects.requireNonNull(
+            config.getConfigurationSection("database"), "config.yml(database)")
+        );
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public static class Limit {
+        public final String permission;
+        public final OptionalInt free;
+        public final OptionalInt paid;
+
+        private Limit(String permission, ConfigurationSection s) {
+            this.permission = Objects.requireNonNull(permission, "config.yml(limit.group)");
+            Objects.requireNonNull(s, "config.yml(limit.group)");
+
+            this.free = s.contains("free", true) ? OptionalInt.of(s.getInt("free")) : OptionalInt.empty();
+            this.paid = s.contains("paid", true) ? OptionalInt.of(s.getInt("paid")) : OptionalInt.empty();
+        }
     }
 
     public static class DatabaseConfig {

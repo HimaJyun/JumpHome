@@ -4,13 +4,18 @@ version: "${project.version}"
 website: "https://github.com/HimaJyun/JumpHome"
 author: "HimaJyun( https://jyn.jp/ )"
 description: "home, spawn, sethome for Bukkit"
+api-version: "1.15"
 
 commands:
   spawn:
     description: "Move to spawn point."
+  sethome:
+    description: "Set home point."
 
 permissions:
   jumphome.spawn:
     default: true
   jumphome.spawn.other:
+    default: true
+  jumphome.sethome:
     default: true
